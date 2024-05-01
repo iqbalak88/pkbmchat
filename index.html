@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENIE Chatbot</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #chat-container {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            margin-top: 50px;
+            overflow: hidden;
+        }
+
+        #chat-log {
+            height: 300px;
+            overflow-y: scroll;
+            padding-right: 15px; /* Add padding to adjust for scrollbar */
+        }
+
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Align user message to the right */
+            margin-bottom: 10px;
+        }
+
+        .message-container.bot-message {
+            align-items: flex-start; /* Align bot message to the left */
+        }
+
+        .message {
+            max-width: 70%;
+            word-wrap: break-word;
+            padding: 10px;
+            border-radius: 15px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-message {
+            background: linear-gradient(to right, #faa039, #2E8B57); /* Gradient from green to dark green */
+            color: white;
+            align-self: flex-end; /* Align user message to the right */
+        }
+
+        .bot-message {
+            background: linear-gradient(to right, #FFA500, #FF8C00); /* Gradient from orange to dark orange */
+            color: white;
+            align-self: flex-start; /* Align bot message to the left */
+        }
+
+        .loading-message {
+            text-align: center;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 70px);
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-log"></div>
+        <div id="loader" class="loading-message" style="display: none;">
+            <img src="loader.gif" width="30px" alt="Loading...">
+        </div>
+        <input type="text" id="user-input" placeholder="Type your message..." onkeydown="handleKeyDown(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const chatLog = document.getElementById("chat-log");
+        const userInput = document.getElementById("user-input");
+        const loader = document.getElementById("loader");
+
+        async function sendMessage() {
+            const userMessage = userInput.value;
+            userInput.value = "";
+
+            // Show loading indicator
+            loader.style.display = "block";
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                const responseData = await response.json();
+                const botMessage = responseData.response;
+
+                // Create message container
+                const messageContainer = document.createElement("div");
+                messageContainer.className = "message-container user-message";
+                messageContainer.innerHTML = `<div class="message">${userMessage}</div>`;
+                chatLog.appendChild(messageContainer);
+
+                // Scroll to the bottom of chat log
+                chatLog.scrollTop = chatLog.scrollHeight;
+
+                // Add bot message to chat log after a short delay
+                setTimeout(() => {
+                    // Hide loading indicator
+                    loader.style.display = "none";
+
+                    // Create bot message container
+                    const botMessageContainer = document.createElement("div");
+                    botMessageContainer.className = "message-container bot-message";
+                    botMessageContainer.innerHTML = `<div class="message">${botMessage}</div>`;
+                    chatLog.appendChild(botMessageContainer);
+
+                    // Scroll to the bottom of chat log
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                }, 500); // Adjust delay as needed
+            } catch (error) {
+                console.error("Error:", error);
+                // Handle errors gracefully, e.g., display an error message to the user
+            }
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
